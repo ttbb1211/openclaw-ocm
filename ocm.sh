@@ -1439,7 +1439,8 @@ show_gateway_token(){
  token=$(gateway_token)
  port=$(gateway_port)
  echo -e "\n--- Gateway Token ---"
- echo "Token: $token"
+echo "Token: ${token:0:4}…${token: -4} (masked)"
+echo "(如需完整 token，输入 y 回车)"; read -r -p "显示完整 token? (y/N): " ans; [[ "${ans:-}" =~ ^[Yy]$ ]] && echo "Token(full): $token"
  echo "地址: http://127.0.0.1:$port/v1/chat/completions"
  echo "------------------------------------------------"
  pause
