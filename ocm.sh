@@ -1284,7 +1284,7 @@ edit_channel(){
  target=$(pick_channel_by_index "$num" || true)
  [[ -z "${target:-}" ]] && return
 
- c_type=$(jq -r --arg n "$target" '.channels[$n].type // ""' "$CONFIG")
+ c_type=$(jq -r --arg n "$target" 'if $n=="telegram" then "telegram" else (.channels[$n].type // "") end' "$CONFIG")
  enabled=$(jq -r --arg n "$target" '.channels[$n].enabled // true' "$CONFIG")
  echo -e "\n--- 修改 channel: $target [$c_type] ---"
  read -r -p "新的 channel 名称 [$target] (回车保持): " n_name
@@ -1301,7 +1301,7 @@ edit_channel(){
   telegram)
    ct=$(jq -r --arg n "$target" '.channels[$n].token // .channels[$n].botToken // ""' "$CONFIG")
    read -r -p "Bot Token [已隐藏，回车保持]: " new_ct; new_ct=${new_ct:-$ct}
-   new_json=$(jq --arg old "$target" --arg new "$n_name" --arg t "$new_ct" --argjson e "$enabled" 'del(.channels[$old]) | .channels[$new]={type:"telegram", botToken:$t, enabled:$e}' "$CONFIG")
+   new_json=$(jq --arg t "$new_ct" --argjson e "$enabled" '.channels.telegram.botToken=$t | .channels.telegram.enabled=$e' "$CONFIG")
    ;;
   discord)
    ct=$(jq -r --arg n "$target" '.channels[$n].token // ""' "$CONFIG")
