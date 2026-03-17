@@ -11,7 +11,7 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 ## 优点 / Why this script is useful
 
 - **一步到位**：安装 OpenClaw、生成配置、启动 Gateway、添加模型/通道，尽量用一套菜单闭环完成。
-- **尽量不踩坑**：把我们实际遇到的坑（配置键写错、服务不常驻、终端显示差异等）固化成脚本逻辑。
+- **尽量不踩坑**：把实际遇到的坑（配置键写错、服务不常驻、终端显示差异等）固化成脚本逻辑。
 - **偏运维友好**：常用检查/日志/启停入口集中，避免每次翻文档。
 - **尽量少暴露敏感信息**：涉及 token 的地方默认不在日志里明文扩散（仍建议你自己注意打码）。
 
@@ -20,7 +20,6 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 - **修复 Telegram Channel 编辑逻辑**：避免写入非法配置键 `channels.telegram.type`，并支持直接更新 `botToken`（保留 allowlist / dmPolicy）。
 - **避免 Gateway 夜间“消失”**：在安装 Gateway 系统服务后自动执行 `loginctl enable-linger root`，防止 root 的 user service 因无登录会话而停止，导致 Telegram 无回复。
 - **时间同步**：排障时确认/推荐启用 NTP（如 `chrony`），避免时间漂移导致 TLS/网络类问题更难查。
-- **文档与可用性**：README 里的 one-liner 代码块已修复，复制按钮只复制命令本身。
 
 > 注：不同终端对 Emoji/宽度的渲染差异较大，菜单对齐以“功能正确”为第一优先。
 
