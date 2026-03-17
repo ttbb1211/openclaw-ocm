@@ -12,6 +12,8 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 
 ```bash
 wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh && bash ocm.sh
+```
+
 功能简介 / What it does
 
 • 安装 OpenClaw（通过 npm -g openclaw@latest）
