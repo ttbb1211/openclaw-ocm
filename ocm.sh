@@ -670,6 +670,9 @@ install_openclaw(){
  echo "⚙️ 正在安装 Gateway 系统服务..."
  if openclaw gateway install >/dev/null 2>&1; then
   echo "✅ Gateway 系统服务已安装"
+\n  # Keep root user services running even without an active login session (prevents overnight stop)
+  loginctl enable-linger root 2>/dev/null || true
+
   if [[ "${OSTYPE:-}" == darwin* ]]; then
    if mac_gateway_service_fix; then
     echo "✅ macOS LaunchAgent 已 reload 并激活"
