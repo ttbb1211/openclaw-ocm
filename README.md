@@ -25,6 +25,16 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 
 ---
 
+## 安装前环境预处理 / Pre-flight (Debian/Ubuntu)
+
+```bash
+# 基础工具
+apt update && apt install -y curl wget jq ca-certificates git
+
+# 时间同步（强烈建议）
+apt install -y chrony && systemctl enable --now chrony
+```
+
 ## 快速开始 / Quick start (one-liner)
 
 ```bash
