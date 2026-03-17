@@ -1612,7 +1612,7 @@ menu(){
  printf "%-3s %s\n" "3."  "⚙️ 管理大模型配置"
  printf "%-3s %s\n" "4."  "✈️ 切换默认主模型"
  printf "%-3s %s\n" "5."  "📱 管理设置 channel"
- printf "%-3s %s\n" "6."  "🛠️ 测试API可用性"
+ printf "%-3s %s\n" "6."  "🛠 检测API可用性"
  printf "%-3s %s\n" "7."  "🔌 修改端口/添加域名"
  printf "%-3s %s\n" "8."  "🔑 一键批准终端设备"
  printf "%-3s %s\n" "9."  "♻️ Gateway 管理"
