@@ -1,6 +1,6 @@
 # openclaw-ocm
 
-一个基于菜单的 OpenClaw 一键管理脚本（安装 / 配置 / 启停 / 日志 / 通道 / 大模型），主打“开箱即用、一气呵成”。
+**一个基于菜单的 OpenClaw 一键管理脚本（安装 / 配置 / 启停 / 日志 / 通道 / 大模型），主打“开箱即用、一气呵成”。**
 
 A menu-driven one-click manager script for OpenClaw (install / configure / start/stop / logs / channels / models), designed to be quick and practical.
 
