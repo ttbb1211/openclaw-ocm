@@ -1615,7 +1615,7 @@ menu(){
  printf "%-3s %s\n" "6."  "🛠 检测 API 可用性"
  printf "%-3s %s\n" "7."  "🔌 修改端口/添加域名"
  printf "%-3s %s\n" "8."  "🔑 一键批准终端设备"
- printf "%-3s %s\n" "9."  "♻️ Gateway 管理"
+ printf "%-3s %s\n" "9."  "♻️ 管理 Gateway"
  printf "%-3s %s\n" "10." "🔎 查询 Gateway Token"
  printf "%-3s %s\n" "11." "⚠️ 升级/重置/卸载管理"
  printf "%-3s %s\n" "0."  "退出"
