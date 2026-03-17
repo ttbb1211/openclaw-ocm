@@ -25,23 +25,71 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 
 ---
 
-## 安装前环境预处理 / Pre-flight (Debian/Ubuntu)
+## 安装与运行 / Install & Run
+
+### 1) 系统要求 / Requirements
+
+| 项目 | 最低配置 | 推荐配置 |
+|---|---:|---:|
+| 操作系统 | Ubuntu 20.04 LTS+ 或 Debian 11/12 | Ubuntu 22.04/24.04 LTS 或 Debian 12 |
+| CPU | 2 核+ | 4 核+ |
+| 内存 | 4GB RAM | 8GB RAM |
+| 存储 | 2GB 可用（仅脚本+依赖；媒体库另算） | 10GB 可用（建议留日志/缓存空间；媒体库另算） |
+| 其他 | 稳定网络、root/sudo 权限 | 稳定网络、root/sudo 权限；建议开启 swap 2–4GB 避免偶发 OOM |
+
+### 2) 安装前系统环境预处理 / Pre-flight
+
+**2.1 安装基础工具（必做）**
 
 ```bash
-# 基础工具
-apt update && apt install -y curl wget jq ca-certificates git
-
-# 时间同步（强烈建议）
-apt install -y chrony && systemctl enable --now chrony
+apt update
+apt install -y curl wget jq ca-certificates git
 ```
 
-## 快速开始 / Quick start (one-liner)
+**2.2 时间同步（强烈建议）**
+
+> 如果系统时间漂移，可能导致 TLS/网络相关问题更难排查。
+
+```bash
+apt install -y chrony
+systemctl enable --now chrony
+```
+
+**2.3 Node.js（必做）**
+
+> OpenClaw 通过 npm 安装。Node.js 建议使用 LTS 版本。
+
+- **方式 A：NodeSource（推荐，适合服务器）**
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+apt install -y nodejs
+node -v
+npm -v
+```
+
+- **方式 B：nvm（可选，适合需要多版本 Node 的场景）**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+nvm install --lts
+node -v
+npm -v
+```
+
+### 3) 快速开始 / Quick start (one-liner)
 
 ```bash
 wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh && bash ocm.sh
 ```
 
-功能简介 / What it does
+---
+
+## 功能简介 / What it does
 
 • 安装 OpenClaw（通过 npm -g openclaw@latest）
 • 创建/更新配置：~/.openclaw/openclaw.json
@@ -50,40 +98,23 @@ wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.
 • 管理 Channel（Telegram Bot 等）
 • 常用运维工具：健康检查、查看日志、设备配对/批准等
 
-───
+---
 
-安全提示 / Security notes
+## 安全提示 / Security notes
 
 • 不要在截图/日志里泄露任何密钥：API Key、Bot Token、Gateway Token、Clawhub Token 等。
 • “查询 Gateway Token”界面默认打码显示（可交互选择是否显示完整 token）。
 • 建议保持网关绑定 loopback (127.0.0.1)，除非你明确理解暴露到公网/LAN 的风险。
 
-───
+---
 
-环境要求 / Requirements
-
-| 项目 | 最低配置 | 推荐配置 |
-|---|---:|---:|
-| 操作系统 | Ubuntu 20.04 LTS+（或 Debian 11/12） | Ubuntu 22.04/24.04 LTS（或 Debian 12） |
-| CPU | 2 核+ | 4 核+ |
-| 内存 | 4GB RAM | 8GB RAM |
-| 存储 | 2GB 可用（仅脚本+依赖；媒体库另算） | 10GB 可用（建议留日志/缓存空间；媒体库另算） |
-| 其他 | 稳定网络、root/sudo 权限 | 稳定网络、root/sudo 权限；建议开启 swap 2–4GB 避免偶发 OOM |
-
-**软件/依赖 / Software:**
-• Linux + bash
-• curl、jq（脚本会尝试自动安装）
-• node + npm（用于安装 OpenClaw）
-
-───
-
-仓库文件 / Repo layout
+## 仓库文件 / Repo layout
 
 • ocm.sh — 主脚本 / main script
 
-───
+---
 
-免责声明 / Disclaimer
+## 免责声明 / Disclaimer
 
 请先阅读脚本内容再运行，尤其是在生产环境或公网服务器上。
 
