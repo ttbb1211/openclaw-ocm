@@ -52,10 +52,13 @@ wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.
 
 环境要求 / Requirements
 
-**最低系统配置 / Minimum:**
-- CPU：1 vCPU
-- 内存：2 GB RAM（建议开启 swap 2–4GB，避免偶发 OOM）
-- 磁盘：≥ 10 GB（仅系统与脚本；媒体库按需另算）
+| 项目 | 最低配置 | 推荐配置 |
+|---|---:|---:|
+| 操作系统 | Ubuntu 20.04 LTS+（或 Debian 11/12） | Ubuntu 22.04/24.04 LTS（或 Debian 12） |
+| CPU | 2 核+ | 4 核+ |
+| 内存 | 4GB RAM | 8GB RAM |
+| 存储 | 2GB 可用（仅脚本+依赖；媒体库另算） | 10GB 可用（建议留日志/缓存空间；媒体库另算） |
+| 其他 | 稳定网络、root/sudo 权限 | 稳定网络、root/sudo 权限；建议开启 swap 2–4GB 避免偶发 OOM |
 
 **软件/依赖 / Software:**
 • Linux + bash
