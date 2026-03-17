@@ -52,6 +52,12 @@ wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.
 
 环境要求 / Requirements
 
+**最低系统配置 / Minimum:**
+- CPU：1 vCPU
+- 内存：2 GB RAM（建议开启 swap 2–4GB，避免偶发 OOM）
+- 磁盘：≥ 10 GB（仅系统与脚本；媒体库按需另算）
+
+**软件/依赖 / Software:**
 • Linux + bash
 • curl、jq（脚本会尝试自动安装）
 • node + npm（用于安装 OpenClaw）
