@@ -35,7 +35,6 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 | CPU | 2 核+ | 4 核+ |
 | 内存 | 4GB RAM | 8GB RAM |
 | 存储 | 2GB 可用（仅脚本+依赖；媒体库另算） | 10GB 可用（建议留日志/缓存空间；媒体库另算） |
-| 其他 | 稳定网络、root/sudo 权限 | 稳定网络、root/sudo 权限；建议开启 swap 2–4GB 避免偶发 OOM |
 
 ### 2) 安装前系统环境预处理 / Pre-flight
 
