@@ -647,6 +647,10 @@ install_openclaw(){
   echo "✅ 检测到已有配置。"
  fi
 
+ if [ -f "$CONFIG" ]; then
+  chmod 600 "$CONFIG" 2>/dev/null || true
+ fi
+
  if cmd_exists openclaw; then
   echo "✅ 检测到 OpenClaw 已安装。"
  else
