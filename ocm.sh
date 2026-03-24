@@ -1115,36 +1115,7 @@ $(list_models)
 EOF
 }
 
-test_api_self_update_ocm(){
- local tmp_file target script_path
- target=$(resolve_script_path)
- tmp_file=$(mktemp)
-
- echo -e "
-🔄 正在更新一键脚本..."
- if ! curl -fsSL "https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh" -o "$tmp_file"; then
-  echo "❌ 拉取最新脚本失败"
-  rm -f "$tmp_file"
-  pause
-  return 1
- fi
-
- if ! bash -n "$tmp_file"; then
-  echo "❌ 下载到的脚本语法检查失败，已取消覆盖"
-  rm -f "$tmp_file"
-  pause
-  return 1
- fi
-
- cp "$tmp_file" "$target"
- chmod +x "$target" 2>/dev/null || true
- rm -f "$tmp_file"
- echo "✅ 一键脚本已更新：$target"
- echo "ℹ️ 请重新执行：bash $target"
- exit 0
-}
-
-menu(){
+test_api_menu(){
  local providers_exist t_n target
  providers_exist=$(list_providers || true)
  if [[ -z "$providers_exist" ]]; then
@@ -1714,6 +1685,35 @@ manage_installation(){
    ;;
   *) return ;;
  esac
+}
+
+self_update_ocm(){
+ local tmp_file target
+ target=$(resolve_script_path)
+ tmp_file=$(mktemp)
+
+ echo -e "
+🔄 正在更新一键脚本..."
+ if ! curl -fsSL "https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh" -o "$tmp_file"; then
+  echo "❌ 拉取最新脚本失败"
+  rm -f "$tmp_file"
+  pause
+  return 1
+ fi
+
+ if ! bash -n "$tmp_file"; then
+  echo "❌ 下载到的脚本语法检查失败，已取消覆盖"
+  rm -f "$tmp_file"
+  pause
+  return 1
+ fi
+
+ cp "$tmp_file" "$target"
+ chmod +x "$target" 2>/dev/null || true
+ rm -f "$tmp_file"
+ echo "✅ 一键脚本已更新：$target"
+ echo "ℹ️ 请重新执行：bash $target"
+ exit 0
 }
 
 menu(){
