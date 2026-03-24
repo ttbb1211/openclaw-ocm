@@ -1115,7 +1115,36 @@ $(list_models)
 EOF
 }
 
-test_api_menu(){
+test_api_self_update_ocm(){
+ local tmp_file target script_path
+ target=$(resolve_script_path)
+ tmp_file=$(mktemp)
+
+ echo -e "
+🔄 正在更新一键脚本..."
+ if ! curl -fsSL "https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh" -o "$tmp_file"; then
+  echo "❌ 拉取最新脚本失败"
+  rm -f "$tmp_file"
+  pause
+  return 1
+ fi
+
+ if ! bash -n "$tmp_file"; then
+  echo "❌ 下载到的脚本语法检查失败，已取消覆盖"
+  rm -f "$tmp_file"
+  pause
+  return 1
+ fi
+
+ cp "$tmp_file" "$target"
+ chmod +x "$target" 2>/dev/null || true
+ rm -f "$tmp_file"
+ echo "✅ 一键脚本已更新：$target"
+ echo "ℹ️ 请重新执行：bash $target"
+ exit 0
+}
+
+menu(){
  local providers_exist t_n target
  providers_exist=$(list_providers || true)
  if [[ -z "$providers_exist" ]]; then
@@ -1702,8 +1731,9 @@ menu(){
  printf "%-3s %s\n" "9."  "♻️ 管理 Gateway"
  printf "%-3s %s\n" "10." "🔎 查询 Gateway Token"
  printf "%-3s %s\n" "11." "⚠️ 升级/重置/卸载管理"
- printf "%-3s %s\n" "0."  "退出"
+ printf "%-3s %s\n" "00." "🔄 更新一键脚本"
  echo "------------------------------------------------"
+ printf "%-3s %s\n" "0."  "退出"
  read -r -p "请选择操作: " choice
 
  case $choice in
@@ -1718,6 +1748,7 @@ menu(){
   9) check_config && gateway_manage ;;
   10) check_config && show_gateway_token ;;
   11) manage_installation ;;
+  00) self_update_ocm ;;
   0) exit 0 ;;
  esac
 }
