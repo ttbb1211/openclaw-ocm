@@ -449,9 +449,10 @@ upgrade_openclaw(){
  echo -e "\n🔄 正在升级 OpenClaw..."
  quiet_run openclaw update status || true
 
- local method before_version target_version after_version install_ok=false
+ local method before_version target_version after_version install_ok=false log_file
  before_version=$(get_openclaw_version || echo "unknown")
  target_version=$(get_latest_openclaw_version || echo "unknown")
+ log_file=$(mktemp)
 
  echo "当前版本: ${before_version}"
  echo "准备拉取: ${target_version}"
@@ -466,19 +467,19 @@ upgrade_openclaw(){
  case "$method" in
   pnpm)
    echo "安装方式: pnpm"
-   if pnpm add -g openclaw@latest >/dev/null; then
+   if pnpm add -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
    fi
    ;;
   npm|"")
    echo "安装方式: npm"
-   if npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null; then
+   if npm install -g openclaw@latest >"$log_file" 2>&1 || sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
    fi
    ;;
   *)
    echo "安装方式: ${method:-npm}"
-   if npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null; then
+   if npm install -g openclaw@latest >"$log_file" 2>&1 || sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
    fi
    ;;
@@ -486,9 +487,13 @@ upgrade_openclaw(){
 
  if [[ "$install_ok" != "true" ]]; then
   echo "❌ OpenClaw 升级失败（安装命令未成功执行）"
+  echo "--- 安装输出 ---"
+  cat "$log_file"
+  rm -f "$log_file"
   return 1
  fi
 
+ rm -f "$log_file"
  hash -r
  after_version=$(get_openclaw_version || echo "unknown")
  echo "更新完成: ${before_version} -> ${after_version}"
