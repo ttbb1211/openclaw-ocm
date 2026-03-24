@@ -458,6 +458,18 @@ upgrade_openclaw(){
  echo "当前版本: ${before_version}"
  echo "准备拉取: ${target_version}"
 
+ if ! need_cmd npm; then
+  echo "⚙️ 未检测到 npm，正在尝试补齐 Node.js / npm 环境..."
+  if ! prepare_node_env; then
+   echo "❌ Node.js / npm 环境准备失败，无法升级 OpenClaw"
+   rm -f "$log_file"
+   return 1
+  fi
+ fi
+
+ echo "Node 版本: $(node -v 2>/dev/null || echo unknown)"
+ echo "npm 版本: $(npm -v 2>/dev/null || echo unknown)"
+
  method=$(current_install_method || true)
  case "$method" in
   pnpm)
@@ -501,7 +513,7 @@ upgrade_openclaw(){
    cat "$log_file"
   else
    echo "(无输出；可能是 sudo 需要交互、npm 不存在，或 shell 在安装命令处提前中断)"
-   echo "建议手动检查：npm -v && node -v && which npm && which sudo"
+   echo "建议手动检查：node -v && npm -v && which node && which npm && which sudo"
   fi
   rm -f "$log_file"
   return 1
