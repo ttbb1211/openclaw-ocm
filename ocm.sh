@@ -389,13 +389,20 @@ current_install_method(){
  local method
  method=$(openclaw update status 2>/dev/null | awk -F'│' '/Install/{gsub(/^ +| +$/, "", $3); print $3; exit}')
  if [[ -n "${method:-}" ]]; then
-  echo "$method"
+  case "$method" in
+   pnpm)
+    echo "npm"
+    ;;
+   *)
+    echo "$method"
+    ;;
+  esac
   return 0
  fi
 
- if need_cmd pnpm; then
-  echo "pnpm"
- elif need_cmd npm; then
+ if need_cmd npm; then
+  echo "npm"
+ elif need_cmd pnpm; then
   echo "npm"
  else
   echo ""
