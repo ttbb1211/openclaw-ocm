@@ -449,7 +449,13 @@ upgrade_openclaw(){
  echo -e "\n🔄 正在升级 OpenClaw..."
  quiet_run openclaw update status || true
 
- local method
+ local method before_version target_version after_version
+ before_version=$(get_openclaw_version)
+ target_version=$(get_latest_openclaw_version)
+
+ echo "当前版本: ${before_version}"
+ echo "准备拉取: ${target_version}"
+
  method=$(current_install_method || true)
  case "$method" in
   pnpm)
@@ -459,17 +465,23 @@ upgrade_openclaw(){
 
  case "$method" in
   pnpm)
+   echo "安装方式: pnpm"
    pnpm add -g openclaw@latest >/dev/null
    ;;
   npm|"")
+   echo "安装方式: npm"
    npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null
    ;;
   *)
+   echo "安装方式: ${method:-npm}"
    npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null
    ;;
  esac
 
  hash -r
+ after_version=$(get_openclaw_version)
+ echo "更新完成: ${before_version} -> ${after_version}"
+
  restart_openclaw
  echo "✅ 升级完成。"
 }
@@ -492,6 +504,12 @@ get_openclaw_version(){
 
  v=$("$openclaw_bin" --version 2>/dev/null | head -n1 | tr -d '[:space:]' || true)
  [[ -n "$v" ]] && echo "$v" || echo "unknown"
+}
+
+get_latest_openclaw_version(){
+ local latest
+ latest=$(npm view openclaw version 2>/dev/null | tail -n1 | tr -d '[:space:]' || true)
+ [[ -n "$latest" ]] && echo "$latest" || echo "unknown"
 }
 
 write_default_config(){
