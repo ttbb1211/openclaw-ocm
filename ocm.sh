@@ -574,6 +574,16 @@ get_latest_openclaw_version(){
  [[ -n "$latest" ]] && echo "$latest" || echo "unknown"
 }
 
+get_remote_ocm_sha(){
+ curl -fsSL "https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh" 2>/dev/null | sha256sum | awk '{print $1}'
+}
+
+get_local_file_sha(){
+ local file="$1"
+ [ -f "$file" ] || return 1
+ sha256sum "$file" 2>/dev/null | awk '{print $1}'
+}
+
 write_default_config(){
  local gen_token curr_date current_version
  gen_token=$(generate_token)
@@ -1688,12 +1698,39 @@ manage_installation(){
 }
 
 self_update_ocm(){
- local tmp_file target
+ local tmp_file target local_sha remote_sha answer
  target=$(resolve_script_path)
  tmp_file=$(mktemp)
 
  echo -e "
-🔄 正在更新一键脚本..."
+🔄 检查一键脚本更新..."
+ local_sha=$(get_local_file_sha "$target" || echo "")
+ remote_sha=$(get_remote_ocm_sha || echo "")
+
+ if [[ -z "$remote_sha" ]]; then
+  echo "❌ 无法获取远端脚本版本信息"
+  rm -f "$tmp_file"
+  pause
+  return 1
+ fi
+
+ if [[ -n "$local_sha" && "$local_sha" == "$remote_sha" ]]; then
+  echo "✅ 当前已是最新版本，无需更新"
+  rm -f "$tmp_file"
+  pause
+  return 0
+ fi
+
+ echo "发现新版一键脚本"
+ read -r -p "是否现在更新？(Y/n): " answer
+ if [[ -n "${answer:-}" && ! "$answer" =~ ^[Yy]$ ]]; then
+  echo "已取消，返回主菜单"
+  rm -f "$tmp_file"
+  pause
+  return 0
+ fi
+
+ echo "⬇️ 正在下载最新脚本..."
  if ! curl -fsSL "https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.sh" -o "$tmp_file"; then
   echo "❌ 拉取最新脚本失败"
   rm -f "$tmp_file"
@@ -1712,8 +1749,9 @@ self_update_ocm(){
  chmod +x "$target" 2>/dev/null || true
  rm -f "$tmp_file"
  echo "✅ 一键脚本已更新：$target"
- echo "ℹ️ 请重新执行：bash $target"
- exit 0
+ echo "ℹ️ 更新已写入，请重新执行：bash $target"
+ pause
+  return 0
 }
 
 menu(){
