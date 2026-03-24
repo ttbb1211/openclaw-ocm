@@ -446,7 +446,8 @@ install_openclaw_package(){
 }
 
 upgrade_openclaw(){
- echo -e "\n🔄 正在升级 OpenClaw..."
+ echo -e "
+🔄 正在升级 OpenClaw..."
  quiet_run openclaw update status || true
 
  local method before_version target_version after_version install_ok=false log_file
@@ -473,14 +474,22 @@ upgrade_openclaw(){
    ;;
   npm|"")
    echo "安装方式: npm"
-   if npm install -g openclaw@latest >"$log_file" 2>&1 || sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+   if npm install -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
+   elif need_cmd sudo; then
+    if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+     install_ok=true
+    fi
    fi
    ;;
   *)
    echo "安装方式: ${method:-npm}"
-   if npm install -g openclaw@latest >"$log_file" 2>&1 || sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+   if npm install -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
+   elif need_cmd sudo; then
+    if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+     install_ok=true
+    fi
    fi
    ;;
  esac
@@ -488,7 +497,12 @@ upgrade_openclaw(){
  if [[ "$install_ok" != "true" ]]; then
   echo "❌ OpenClaw 升级失败（安装命令未成功执行）"
   echo "--- 安装输出 ---"
-  cat "$log_file"
+  if [[ -s "$log_file" ]]; then
+   cat "$log_file"
+  else
+   echo "(无输出；可能是 sudo 需要交互、npm 不存在，或 shell 在安装命令处提前中断)"
+   echo "建议手动检查：npm -v && node -v && which npm && which sudo"
+  fi
   rm -f "$log_file"
   return 1
  fi
