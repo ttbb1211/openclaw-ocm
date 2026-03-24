@@ -482,6 +482,15 @@ upgrade_openclaw(){
    echo "安装方式: pnpm"
    if pnpm add -g openclaw@latest >"$log_file" 2>&1; then
     install_ok=true
+   elif grep -q 'ERR_PNPM_NO_GLOBAL_BIN_DIR' "$log_file" 2>/dev/null; then
+    echo "⚠️ 检测到 pnpm 未初始化全局 bin 目录，自动回退使用 npm 安装..."
+    if npm install -g openclaw@latest >"$log_file" 2>&1; then
+     install_ok=true
+    elif need_cmd sudo; then
+     if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+      install_ok=true
+     fi
+    fi
    fi
    ;;
   npm|"")
