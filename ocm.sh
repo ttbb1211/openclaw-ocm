@@ -449,9 +449,9 @@ upgrade_openclaw(){
  echo -e "\n🔄 正在升级 OpenClaw..."
  quiet_run openclaw update status || true
 
- local method before_version target_version after_version
- before_version=$(get_openclaw_version)
- target_version=$(get_latest_openclaw_version)
+ local method before_version target_version after_version install_ok=false
+ before_version=$(get_openclaw_version || echo "unknown")
+ target_version=$(get_latest_openclaw_version || echo "unknown")
 
  echo "当前版本: ${before_version}"
  echo "准备拉取: ${target_version}"
@@ -466,24 +466,39 @@ upgrade_openclaw(){
  case "$method" in
   pnpm)
    echo "安装方式: pnpm"
-   pnpm add -g openclaw@latest >/dev/null
+   if pnpm add -g openclaw@latest >/dev/null; then
+    install_ok=true
+   fi
    ;;
   npm|"")
    echo "安装方式: npm"
-   npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null
+   if npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null; then
+    install_ok=true
+   fi
    ;;
   *)
    echo "安装方式: ${method:-npm}"
-   npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null
+   if npm install -g openclaw@latest >/dev/null || sudo npm install -g openclaw@latest >/dev/null; then
+    install_ok=true
+   fi
    ;;
  esac
 
+ if [[ "$install_ok" != "true" ]]; then
+  echo "❌ OpenClaw 升级失败（安装命令未成功执行）"
+  return 1
+ fi
+
  hash -r
- after_version=$(get_openclaw_version)
+ after_version=$(get_openclaw_version || echo "unknown")
  echo "更新完成: ${before_version} -> ${after_version}"
 
- restart_openclaw
- echo "✅ 升级完成。"
+ if restart_openclaw; then
+  echo "✅ 升级完成。"
+ else
+  echo "⚠️ OpenClaw 已更新，但 Gateway 重启失败，请进入 [9] 查看 Gateway 管理/日志"
+  return 1
+ fi
 }
 
 generate_token(){
