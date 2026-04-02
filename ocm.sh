@@ -555,7 +555,8 @@ upgrade_openclaw(){
 }
 
 select_openclaw_version_from_list(){
- local versions_json picked total limit i version
+ local versions_json picked total i version selected_version
+ local -a versions
  versions_json=$(npm view openclaw versions --json 2>/dev/null || true)
  [[ -z "$versions_json" ]] && return 1
 
@@ -564,14 +565,14 @@ select_openclaw_version_from_list(){
  total=${#versions[@]}
  [[ "$total" -eq 0 ]] && return 1
 
- echo "最近可选版本："
+ echo "最近可选版本：" >&2
  i=1
  for version in "${versions[@]}"; do
-  echo "$i) $version"
+  echo "$i) $version" >&2
   i=$((i+1))
  done
- echo "0) 手动输入版本号"
- read -r -p "请选择版本编号 (回车取消): " picked
+ echo "0) 手动输入版本号" >&2
+ read -r -p "请选择版本编号 (回车取消): " picked >&2
  [[ -z "${picked:-}" ]] && return 2
  if [[ "$picked" == "0" ]]; then
   return 3
@@ -580,8 +581,9 @@ select_openclaw_version_from_list(){
  if (( picked < 1 || picked > total )); then
   return 1
  fi
+ selected_version="${versions[$((picked-1))]}"
  printf '%s
-' "${versions[$((picked-1))]}"
+' "$selected_version"
  return 0
 }
 
