@@ -555,20 +555,25 @@ upgrade_openclaw(){
 }
 
 select_openclaw_version_from_list(){
- local versions_json picked total i version selected_version
+ local versions_json picked total i version selected_version current_version label
  local -a versions
  versions_json=$(npm view openclaw versions --json 2>/dev/null || true)
  [[ -z "$versions_json" ]] && return 1
 
  mapfile -t versions < <(printf '%s
-' "$versions_json" | jq -r '.[]?' 2>/dev/null | tail -n 15)
+' "$versions_json" | jq -r '.[]?' 2>/dev/null | grep -v -- '-beta\.' | tail -n 15)
  total=${#versions[@]}
  [[ "$total" -eq 0 ]] && return 1
 
+ current_version=$(get_openclaw_version || echo "unknown")
  echo "最近可选版本：" >&2
  i=1
  for version in "${versions[@]}"; do
-  echo "$i) $version" >&2
+  label="$version"
+  if [[ "$version" == "$current_version" ]]; then
+   label="$version (当前)"
+  fi
+  echo "$i) $label" >&2
   i=$((i+1))
  done
  echo "0) 手动输入版本号" >&2
