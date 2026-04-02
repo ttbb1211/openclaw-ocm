@@ -554,11 +554,65 @@ upgrade_openclaw(){
  install_openclaw_target "openclaw@latest" "升级"
 }
 
+select_openclaw_version_from_list(){
+ local versions_json picked total limit i version
+ versions_json=$(npm view openclaw versions --json 2>/dev/null || true)
+ [[ -z "$versions_json" ]] && return 1
+
+ mapfile -t versions < <(printf '%s
+' "$versions_json" | jq -r '.[]?' 2>/dev/null | tail -n 15)
+ total=${#versions[@]}
+ [[ "$total" -eq 0 ]] && return 1
+
+ echo "最近可选版本："
+ i=1
+ for version in "${versions[@]}"; do
+  echo "$i) $version"
+  i=$((i+1))
+ done
+ echo "0) 手动输入版本号"
+ read -r -p "请选择版本编号 (回车取消): " picked
+ [[ -z "${picked:-}" ]] && return 2
+ if [[ "$picked" == "0" ]]; then
+  return 3
+ fi
+ [[ "$picked" =~ ^[0-9]+$ ]] || return 1
+ if (( picked < 1 || picked > total )); then
+  return 1
+ fi
+ printf '%s
+' "${versions[$((picked-1))]}"
+ return 0
+}
+
 install_specific_openclaw_version(){
- local target_version resolved_version
+ local target_version resolved_version picked_version
  echo -e "
 ⏬ 安装指定版本（可升级/降级）..."
- read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version
+ echo "1) 从最近版本列表选择"
+ echo "2) 手动输入版本号"
+ read -r -p "请选择方式 [默认1，回车即选列表]: " choice
+
+ case "${choice:-1}" in
+  1)
+   picked_version=$(select_openclaw_version_from_list) || rc=$?
+   rc=${rc:-0}
+   case "$rc" in
+    0) target_version="$picked_version" ;;
+    2) echo "已取消。"; return 0 ;;
+    3) read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
+    *) echo "❌ 获取版本列表失败，请改用手动输入。"; read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
+   esac
+   ;;
+  2)
+   read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version
+   ;;
+  *)
+   echo "已取消。"
+   return 0
+   ;;
+ esac
+
  [[ -z "${target_version:-}" ]] && { echo "已取消。"; return 0; }
 
  echo "🔍 正在检查版本是否存在..."
