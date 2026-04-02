@@ -668,7 +668,7 @@ get_openclaw_version(){
   return 0
  fi
 
- v=$("$openclaw_bin" --version 2>/dev/null | head -n1 | tr -d '[:space:]' || true)
+ v=$("$openclaw_bin" --version 2>/dev/null | head -n1 | sed -E 's/^OpenClaw[[:space:]]+//; s/[[:space:]]*\(.*$//' | tr -d '[:space:]' || true)
  [[ -n "$v" ]] && echo "$v" || echo "unknown"
 }
 
