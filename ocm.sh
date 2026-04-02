@@ -452,23 +452,19 @@ install_openclaw_package(){
  return 0
 }
 
-upgrade_openclaw(){
- echo -e "
-🔄 正在升级 OpenClaw..."
- quiet_run openclaw update status || true
-
- local method before_version target_version after_version install_ok=false log_file
+install_openclaw_target(){
+ local package_ref="$1" action_label="$2"
+ local method before_version after_version install_ok=false log_file
  before_version=$(get_openclaw_version || echo "unknown")
- target_version=$(get_latest_openclaw_version || echo "unknown")
  log_file=$(mktemp)
 
  echo "当前版本: ${before_version}"
- echo "准备拉取: ${target_version}"
+ echo "目标版本: ${package_ref#openclaw@}"
 
  if ! need_cmd npm; then
   echo "⚙️ 未检测到 npm，正在尝试补齐 Node.js / npm 环境..."
   if ! prepare_node_env; then
-   echo "❌ Node.js / npm 环境准备失败，无法升级 OpenClaw"
+   echo "❌ Node.js / npm 环境准备失败，无法${action_label} OpenClaw"
    rm -f "$log_file"
    return 1
   fi
@@ -487,14 +483,14 @@ upgrade_openclaw(){
  case "$method" in
   pnpm)
    echo "安装方式: pnpm"
-   if pnpm add -g openclaw@latest >"$log_file" 2>&1; then
+   if pnpm add -g "$package_ref" >"$log_file" 2>&1; then
     install_ok=true
    elif grep -q 'ERR_PNPM_NO_GLOBAL_BIN_DIR' "$log_file" 2>/dev/null; then
     echo "⚠️ 检测到 pnpm 未初始化全局 bin 目录，自动回退使用 npm 安装..."
-    if npm install -g openclaw@latest >"$log_file" 2>&1; then
+    if npm install -g "$package_ref" >"$log_file" 2>&1; then
      install_ok=true
     elif need_cmd sudo; then
-     if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+     if sudo npm install -g "$package_ref" >"$log_file" 2>&1; then
       install_ok=true
      fi
     fi
@@ -502,20 +498,20 @@ upgrade_openclaw(){
    ;;
   npm|"")
    echo "安装方式: npm"
-   if npm install -g openclaw@latest >"$log_file" 2>&1; then
+   if npm install -g "$package_ref" >"$log_file" 2>&1; then
     install_ok=true
    elif need_cmd sudo; then
-    if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+    if sudo npm install -g "$package_ref" >"$log_file" 2>&1; then
      install_ok=true
     fi
    fi
    ;;
   *)
    echo "安装方式: ${method:-npm}"
-   if npm install -g openclaw@latest >"$log_file" 2>&1; then
+   if npm install -g "$package_ref" >"$log_file" 2>&1; then
     install_ok=true
    elif need_cmd sudo; then
-    if sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+    if sudo npm install -g "$package_ref" >"$log_file" 2>&1; then
      install_ok=true
     fi
    fi
@@ -523,7 +519,7 @@ upgrade_openclaw(){
  esac
 
  if [[ "$install_ok" != "true" ]]; then
-  echo "❌ OpenClaw 升级失败（安装命令未成功执行）"
+  echo "❌ OpenClaw ${action_label}失败（安装命令未成功执行）"
   echo "--- 安装输出 ---"
   if [[ -s "$log_file" ]]; then
    cat "$log_file"
@@ -538,14 +534,43 @@ upgrade_openclaw(){
  rm -f "$log_file"
  hash -r
  after_version=$(get_openclaw_version || echo "unknown")
- echo "更新完成: ${before_version} -> ${after_version}"
+ echo "切换完成: ${before_version} -> ${after_version}"
 
  if restart_openclaw; then
-  echo "✅ 升级完成。"
+  echo "✅ ${action_label}完成。"
  else
-  echo "⚠️ OpenClaw 已更新，但 Gateway 重启失败，请进入 [9] 查看 Gateway 管理/日志"
+  echo "⚠️ OpenClaw 已切换版本，但 Gateway 重启失败，请进入 [9] 查看 Gateway 管理/日志"
   return 1
  fi
+}
+
+upgrade_openclaw(){
+ echo -e "
+🔄 正在升级 OpenClaw..."
+ quiet_run openclaw update status || true
+ local target_version
+ target_version=$(get_latest_openclaw_version || echo "unknown")
+ echo "准备拉取: ${target_version}"
+ install_openclaw_target "openclaw@latest" "升级"
+}
+
+install_specific_openclaw_version(){
+ local target_version resolved_version
+ echo -e "
+⏬ 安装指定版本（可升级/降级）..."
+ read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version
+ [[ -z "${target_version:-}" ]] && { echo "已取消。"; return 0; }
+
+ echo "🔍 正在检查版本是否存在..."
+ resolved_version=$(npm view "openclaw@${target_version}" version 2>/dev/null | tail -n1 | tr -d '[:space:]' || true)
+ if [[ -z "$resolved_version" ]]; then
+  echo "❌ 未找到版本: $target_version"
+  echo "可先手动查看：npm view openclaw versions --json"
+  return 1
+ fi
+
+ backup_config
+ install_openclaw_target "openclaw@${resolved_version}" "安装指定版本"
 }
 
 generate_token(){
@@ -1619,6 +1644,7 @@ manage_installation(){
  echo "3) 直接重置 OpenClaw"
  echo "4) 仅卸载 OpenClaw 程序（保留 ~/.openclaw 数据）"
  echo "5) 彻底卸载 OpenClaw（删除 ~/.openclaw 全部数据）"
+ echo "6) 安装指定版本（可升级/降级）"
  echo "0) 取消并返回主菜单"
  echo "------------------------------------------------"
  read -r -p "请选择操作: " mi_choice
@@ -1691,6 +1717,10 @@ manage_installation(){
    else
     echo "已取消。"
    fi
+   pause
+   ;;
+  6)
+   install_specific_openclaw_version
    pause
    ;;
   *) return ;;
