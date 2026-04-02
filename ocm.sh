@@ -555,41 +555,59 @@ upgrade_openclaw(){
 }
 
 select_openclaw_version_from_list(){
- local versions_json picked total i version selected_version current_version label
- local -a versions
+ local versions_json picked total i version selected_version current_version label show_all="false"
+ local -a versions display_versions
  versions_json=$(npm view openclaw versions --json 2>/dev/null || true)
  [[ -z "$versions_json" ]] && return 1
 
  mapfile -t versions < <(printf '%s
-' "$versions_json" | jq -r '.[]?' 2>/dev/null | grep -v -- '-beta\.' | tail -n 15)
+' "$versions_json" | jq -r '.[]?' 2>/dev/null | grep -v -- '-beta\.')
  total=${#versions[@]}
  [[ "$total" -eq 0 ]] && return 1
 
  current_version=$(get_openclaw_version || echo "unknown")
- echo "最近可选版本：" >&2
- i=1
- for version in "${versions[@]}"; do
-  label="$version"
-  if [[ "$version" == "$current_version" ]]; then
-   label="$version (当前)"
+ while true; do
+  if [[ "$show_all" == "true" || "$total" -le 10 ]]; then
+   display_versions=("${versions[@]}")
+  else
+   mapfile -t display_versions < <(printf '%s
+' "${versions[@]}" | tail -n 10)
   fi
-  echo "$i) $label" >&2
-  i=$((i+1))
- done
- echo "0) 手动输入版本号" >&2
- read -r -p "请选择版本编号 (回车取消): " picked >&2
- [[ -z "${picked:-}" ]] && return 2
- if [[ "$picked" == "0" ]]; then
-  return 3
- fi
- [[ "$picked" =~ ^[0-9]+$ ]] || return 1
- if (( picked < 1 || picked > total )); then
-  return 1
- fi
- selected_version="${versions[$((picked-1))]}"
- printf '%s
+
+  echo "最近可选版本：" >&2
+  i=1
+  for version in "${display_versions[@]}"; do
+   label="$version"
+   if [[ "$version" == "$current_version" ]]; then
+    label="$version (当前)"
+   fi
+   echo "$i) $label" >&2
+   i=$((i+1))
+  done
+
+  if [[ "$show_all" != "true" && "$total" -gt 10 ]]; then
+   echo "98) 查看更多正式版" >&2
+  fi
+  echo "0) 手动输入版本号" >&2
+  read -r -p "请选择版本编号 (回车取消): " picked >&2
+  [[ -z "${picked:-}" ]] && return 2
+
+  if [[ "$picked" == "98" && "$show_all" != "true" && "$total" -gt 10 ]]; then
+   show_all="true"
+   continue
+  fi
+  if [[ "$picked" == "0" ]]; then
+   return 3
+  fi
+  [[ "$picked" =~ ^[0-9]+$ ]] || return 1
+  if (( picked < 1 || picked > ${#display_versions[@]} )); then
+   return 1
+  fi
+  selected_version="${display_versions[$((picked-1))]}"
+  printf '%s
 ' "$selected_version"
- return 0
+  return 0
+ done
 }
 
 install_specific_openclaw_version(){
