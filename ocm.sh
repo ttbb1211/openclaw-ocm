@@ -728,6 +728,45 @@ EOF
  echo "⚠️ 注意：此模式会显著降低执行审批保护，仅适合你完全自控的服务器"
 }
 
+restore_exec_approvals_default(){
+ local approvals_file approvals_dir backup_file
+ approvals_dir="$HOME/.openclaw"
+ approvals_file="$approvals_dir/exec-approvals.json"
+ mkdir -p "$approvals_dir"
+
+ if [[ -f "$approvals_file" ]]; then
+  backup_file="$approvals_file.bak.$(date +%Y%m%d-%H%M%S)"
+  cp "$approvals_file" "$backup_file"
+  echo "已备份当前审批配置: $backup_file"
+ fi
+
+ cat > "$approvals_file" <<'EOF'
+{
+  "version": 1,
+  "defaults": {
+    "security": "deny",
+    "ask": "on-miss",
+    "askFallback": "deny",
+    "autoAllowSkills": false
+  },
+  "agents": {
+    "main": {
+      "security": "allowlist",
+      "ask": "on-miss",
+      "askFallback": "deny",
+      "autoAllowSkills": true,
+      "allowlist": []
+    }
+  }
+}
+EOF
+
+ chmod 600 "$approvals_file" 2>/dev/null || true
+ echo "✅ 已恢复默认审批设置"
+ echo "配置文件: $approvals_file"
+ echo "说明: defaults=deny/on-miss，main=allowlist/on-miss"
+}
+
 write_default_config(){
  local gen_token curr_date current_version
  gen_token=$(generate_token)
@@ -1765,6 +1804,7 @@ manage_installation(){
  echo "5) 彻底卸载 OpenClaw（删除 ~/.openclaw 全部数据）"
  echo "6) 安装指定版本（可升级/降级）"
  echo "7) 全局一键解除审批（高风险）"
+ echo "8) 恢复默认审批设置"
  echo "0) 取消并返回主菜单"
  echo "------------------------------------------------"
  read -r -p "请选择操作: " mi_choice
@@ -1848,6 +1888,16 @@ manage_installation(){
    read -r -p "确认继续？(y/N): " confirm
    if [[ "$confirm" =~ ^[Yy]$ ]]; then
     enable_exec_approvals_full_open
+   else
+    echo "已取消。"
+   fi
+   pause
+   ;;
+  8)
+   echo "将恢复为更保守的默认审批设置。"
+   read -r -p "确认继续？(y/N): " confirm
+   if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    restore_exec_approvals_default
    else
     echo "已取消。"
    fi
