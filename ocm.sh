@@ -688,17 +688,52 @@ get_local_file_sha(){
  sha256sum "$file" 2>/dev/null | awk '{print $1}'
 }
 
+backup_file_with_timestamp(){
+ local file="$1"
+ [[ -f "$file" ]] || return 0
+ cp "$file" "$file.bak.$(date +%Y%m%d-%H%M%S)"
+}
+
+set_openclaw_full_open_profile(){
+ local cfg="$HOME/.openclaw/openclaw.json"
+ [[ -f "$cfg" ]] || return 0
+ backup_file_with_timestamp "$cfg"
+ jq '
+  .tools = (.tools // {}) |
+  .tools.exec = (.tools.exec // {}) |
+  .tools.exec.security = "full" |
+  .tools.exec.ask = "off" |
+  .tools.exec.elevated = true |
+  .agents = (.agents // {}) |
+  .agents.defaults = (.agents.defaults // {}) |
+  .agents.defaults.toolPolicyProfile = "full"
+ ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
+ chmod 600 "$cfg" 2>/dev/null || true
+}
+
+set_openclaw_default_profile(){
+ local cfg="$HOME/.openclaw/openclaw.json"
+ [[ -f "$cfg" ]] || return 0
+ backup_file_with_timestamp "$cfg"
+ jq '
+  .tools = (.tools // {}) |
+  .tools.exec = (.tools.exec // {}) |
+  .tools.exec.security = "allowlist" |
+  .tools.exec.ask = "on-miss" |
+  .tools.exec.elevated = false |
+  .agents = (.agents // {}) |
+  .agents.defaults = (.agents.defaults // {}) |
+  .agents.defaults.toolPolicyProfile = "default"
+ ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
+ chmod 600 "$cfg" 2>/dev/null || true
+}
+
 enable_exec_approvals_full_open(){
- local approvals_file approvals_dir backup_file
+ local approvals_file approvals_dir
  approvals_dir="$HOME/.openclaw"
  approvals_file="$approvals_dir/exec-approvals.json"
  mkdir -p "$approvals_dir"
-
- if [[ -f "$approvals_file" ]]; then
-  backup_file="$approvals_file.bak.$(date +%Y%m%d-%H%M%S)"
-  cp "$approvals_file" "$backup_file"
-  echo "已备份原审批配置: $backup_file"
- fi
+ backup_file_with_timestamp "$approvals_file"
 
  cat > "$approvals_file" <<'EOF'
 {
@@ -722,23 +757,20 @@ enable_exec_approvals_full_open(){
 EOF
 
  chmod 600 "$approvals_file" 2>/dev/null || true
- echo "✅ 已启用全局一键解除审批（高风险模式）"
+ set_openclaw_full_open_profile
+ echo "✅ 已启用完全开放模式（双层一起改，高风险）"
+ echo "配置文件: $HOME/.openclaw/openclaw.json"
  echo "配置文件: $approvals_file"
- echo "说明: 默认与 main agent 均已设置为 security=full, ask=off"
- echo "⚠️ 注意：此模式会显著降低执行审批保护，仅适合你完全自控的服务器"
+ echo "说明: tool policy + exec approvals 均已切换到开放模式"
+ echo "⚠️ 注意：此模式会显著降低保护，仅适合你完全自控的服务器"
 }
 
 restore_exec_approvals_default(){
- local approvals_file approvals_dir backup_file
+ local approvals_file approvals_dir
  approvals_dir="$HOME/.openclaw"
  approvals_file="$approvals_dir/exec-approvals.json"
  mkdir -p "$approvals_dir"
-
- if [[ -f "$approvals_file" ]]; then
-  backup_file="$approvals_file.bak.$(date +%Y%m%d-%H%M%S)"
-  cp "$approvals_file" "$backup_file"
-  echo "已备份当前审批配置: $backup_file"
- fi
+ backup_file_with_timestamp "$approvals_file"
 
  cat > "$approvals_file" <<'EOF'
 {
@@ -762,9 +794,11 @@ restore_exec_approvals_default(){
 EOF
 
  chmod 600 "$approvals_file" 2>/dev/null || true
- echo "✅ 已恢复默认审批设置"
+ set_openclaw_default_profile
+ echo "✅ 已恢复默认安全模式（双层恢复）"
+ echo "配置文件: $HOME/.openclaw/openclaw.json"
  echo "配置文件: $approvals_file"
- echo "说明: defaults=deny/on-miss，main=allowlist/on-miss"
+ echo "说明: tool policy + exec approvals 已恢复为保守默认值"
 }
 
 write_default_config(){
@@ -1803,8 +1837,8 @@ manage_installation(){
  echo "4) 仅卸载 OpenClaw 程序（保留 ~/.openclaw 数据）"
  echo "5) 彻底卸载 OpenClaw（删除 ~/.openclaw 全部数据）"
  echo "6) 安装指定版本（可升级/降级）"
- echo "7) 全局一键解除审批（高风险）"
- echo "8) 恢复默认审批设置"
+ echo "7) 完全开放模式（双层一起改，高风险）"
+ echo "8) 恢复默认安全模式（双层恢复）"
  echo "0) 取消并返回主菜单"
  echo "------------------------------------------------"
  read -r -p "请选择操作: " mi_choice
@@ -1884,7 +1918,7 @@ manage_installation(){
    pause
    ;;
   7)
-   echo "⚠️ 该操作会将 exec 审批切换为全局放开模式（security=full, ask=off）"
+   echo "⚠️ 该操作会将 tool policy + exec approvals 一起切换到完全开放模式"
    read -r -p "确认继续？(y/N): " confirm
    if [[ "$confirm" =~ ^[Yy]$ ]]; then
     enable_exec_approvals_full_open
@@ -1894,7 +1928,7 @@ manage_installation(){
    pause
    ;;
   8)
-   echo "将恢复为更保守的默认审批设置。"
+   echo "将同时恢复 tool policy 和 exec approvals 的默认安全模式。"
    read -r -p "确认继续？(y/N): " confirm
    if [[ "$confirm" =~ ^[Yy]$ ]]; then
     restore_exec_approvals_default
