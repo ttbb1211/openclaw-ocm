@@ -67,6 +67,8 @@ node -v
 npm -v
 ```
 
+> 注意：NodeSource 安装方式会写入第三方软件源配置，适合服务器快速部署；如果你希望尽量少改系统源，可改用 nvm 或手动安装 Node.js。
+
 - **方式 B：nvm（可选，适合需要多版本 Node 的场景）**
 
 ```bash
@@ -88,28 +90,106 @@ wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.
 
 ---
 
+## 运行脚本后会修改什么 / What this script changes
+
+运行 `ocm.sh` 后，脚本可能会对系统做如下修改：
+
+- 安装基础依赖（如 `jq`、`curl`）
+- 准备 Node.js 22+ 运行环境
+  - 某些 Linux 发行版下会引入 **NodeSource** 软件源
+- 通过 `npm -g` 安装 `openclaw@latest`
+- 创建或更新 OpenClaw 配置目录：
+  - `~/.openclaw/`
+  - `~/.openclaw/openclaw.json`
+  - `~/.openclaw/backups/`
+- 可能写入全局快捷命令：
+  - `/usr/local/bin/ocm`
+  - 或 macOS 下的 `/opt/homebrew/bin/ocm`
+- 可能启动、停止或重启 OpenClaw Gateway
+- 在某些场景下可能执行：
+  - `loginctl enable-linger root`
+
+如果你不希望脚本自动修改这些内容，请先阅读 `ocm.sh` 后再手动执行其中需要的部分。
+
+---
+
 ## 功能简介 / What it does
 
-• 安装 OpenClaw（通过 npm -g openclaw@latest）
-• 创建/更新配置：~/.openclaw/openclaw.json
-• 启动/停止/重启 OpenClaw Gateway（优先走 systemd user service）
-• 快捷添加/管理大模型 Provider（预设 + 自定义 BaseURL）
-• 管理 Channel（Telegram Bot 等）
+• 安装 OpenClaw（通过 npm -g openclaw@latest）  
+• 创建/更新配置：~/.openclaw/openclaw.json  
+• 启动/停止/重启 OpenClaw Gateway（优先走 systemd user service）  
+• 快捷添加/管理大模型 Provider（预设 + 自定义 BaseURL）  
+• 管理 Channel（Telegram Bot 等）  
 • 常用运维工具：健康检查、查看日志、设备配对/批准等
+
+---
+
+## 适用场景 / Good fit
+
+适合：
+
+- 新机器快速初始化 OpenClaw
+- 家用服务器 / VPS / Linux 主机
+- 希望通过菜单完成安装、配置、启动、排障的人
+
+不太适合：
+
+- 对系统改动极度敏感的生产环境
+- 不允许引入第三方软件源的环境
+- 希望逐条手动执行所有安装步骤的场景
 
 ---
 
 ## 安全提示 / Security notes
 
-• 不要在截图/日志里泄露任何密钥：API Key、Bot Token、Gateway Token、Clawhub Token 等。
-• “查询 Gateway Token”界面默认打码显示（可交互选择是否显示完整 token）。
-• 建议保持网关绑定 loopback (127.0.0.1)，除非你明确理解暴露到公网/LAN 的风险。
+• 不要在截图/日志里泄露任何密钥：API Key、Bot Token、Gateway Token、Clawhub Token 等。  
+• “查询 Gateway Token”界面默认打码显示（可交互选择是否显示完整 token）。  
+• 建议保持网关绑定 loopback (127.0.0.1)，除非你明确理解暴露到公网/LAN 的风险。  
+• 生产环境或公网服务器请先审阅脚本内容，再决定是否直接运行 one-liner。
+
+---
+
+## 卸载 / Rollback
+
+如果你想回退，可参考以下步骤：
+
+### 卸载 OpenClaw
+
+```bash
+npm uninstall -g openclaw
+```
+
+### 停止 Gateway
+
+```bash
+openclaw gateway stop
+```
+
+### 删除 OCM 启动命令
+
+```bash
+rm -f /usr/local/bin/ocm
+```
+
+macOS（Homebrew 路径）可能还需要：
+
+```bash
+rm -f /opt/homebrew/bin/ocm
+```
+
+### 删除用户配置
+
+```bash
+rm -rf ~/.openclaw
+```
+
+> 注意：删除 `~/.openclaw` 会清除你的本地配置、备份与日志，请先确认不再需要。
 
 ---
 
 ## 仓库文件 / Repo layout
 
-• ocm.sh — 主脚本 / main script
+• `ocm.sh` — 主脚本 / main script
 
 ---
 
