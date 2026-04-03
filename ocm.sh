@@ -1927,7 +1927,7 @@ menu(){
  clear
  echo "🍀 OpenClaw 全能管理助手 stable+"
  echo "------------------------------------------------"
- printf "%-3s %s\n" "1."  "🚀 安装 OpenClaw"
+ printf "%-3s %s\n" "1."  "🚀 安装 OpenClaw（最新 / 指定版本）"
  printf "%-3s %s\n" "2."  "📂 快捷添加大模型"
  printf "%-3s %s\n" "3."  "⚙️ 管理大模型配置"
  printf "%-3s %s\n" "4."  "✈️ 切换默认主模型"
