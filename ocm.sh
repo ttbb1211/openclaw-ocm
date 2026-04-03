@@ -688,111 +688,6 @@ get_local_file_sha(){
  sha256sum "$file" 2>/dev/null | awk '{print $1}'
 }
 
-backup_file_with_timestamp(){
- local file="$1"
- [[ -f "$file" ]] || return 0
- cp "$file" "$file.bak.$(date +%Y%m%d-%H%M%S)"
-}
-
-set_openclaw_full_open_profile(){
- local cfg="$HOME/.openclaw/openclaw.json"
- [[ -f "$cfg" ]] || return 0
- backup_file_with_timestamp "$cfg"
- jq '
-  .tools = (.tools // {}) |
-  .tools.exec = (.tools.exec // {}) |
-  .tools.exec.security = "full" |
-  .tools.exec.ask = "off"
- ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
- chmod 600 "$cfg" 2>/dev/null || true
-}
-
-set_openclaw_default_profile(){
- local cfg="$HOME/.openclaw/openclaw.json"
- [[ -f "$cfg" ]] || return 0
- backup_file_with_timestamp "$cfg"
- jq '
-  .tools = (.tools // {}) |
-  .tools.exec = (.tools.exec // {}) |
-  .tools.exec.security = "allowlist" |
-  .tools.exec.ask = "on-miss"
- ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
- chmod 600 "$cfg" 2>/dev/null || true
-}
-
-enable_exec_approvals_full_open(){
- local approvals_file approvals_dir
- approvals_dir="$HOME/.openclaw"
- approvals_file="$approvals_dir/exec-approvals.json"
- mkdir -p "$approvals_dir"
- backup_file_with_timestamp "$approvals_file"
-
- cat > "$approvals_file" <<'EOF'
-{
-  "version": 1,
-  "defaults": {
-    "security": "full",
-    "ask": "off",
-    "askFallback": "full",
-    "autoAllowSkills": true
-  },
-  "agents": {
-    "main": {
-      "security": "full",
-      "ask": "off",
-      "askFallback": "full",
-      "autoAllowSkills": true,
-      "allowlist": []
-    }
-  }
-}
-EOF
-
- chmod 600 "$approvals_file" 2>/dev/null || true
- set_openclaw_full_open_profile
- echo "✅ 已启用完全开放模式（双层一起改，高风险）"
- echo "配置文件: $HOME/.openclaw/openclaw.json"
- echo "配置文件: $approvals_file"
- echo "说明: tool policy + exec approvals 均已切换到开放模式"
- echo "⚠️ 注意：此模式会显著降低保护，仅适合你完全自控的服务器"
-}
-
-restore_exec_approvals_default(){
- local approvals_file approvals_dir
- approvals_dir="$HOME/.openclaw"
- approvals_file="$approvals_dir/exec-approvals.json"
- mkdir -p "$approvals_dir"
- backup_file_with_timestamp "$approvals_file"
-
- cat > "$approvals_file" <<'EOF'
-{
-  "version": 1,
-  "defaults": {
-    "security": "deny",
-    "ask": "on-miss",
-    "askFallback": "deny",
-    "autoAllowSkills": false
-  },
-  "agents": {
-    "main": {
-      "security": "allowlist",
-      "ask": "on-miss",
-      "askFallback": "deny",
-      "autoAllowSkills": true,
-      "allowlist": []
-    }
-  }
-}
-EOF
-
- chmod 600 "$approvals_file" 2>/dev/null || true
- set_openclaw_default_profile
- echo "✅ 已恢复默认安全模式（双层恢复）"
- echo "配置文件: $HOME/.openclaw/openclaw.json"
- echo "配置文件: $approvals_file"
- echo "说明: tool policy + exec approvals 已恢复为保守默认值"
-}
-
 write_default_config(){
  local gen_token curr_date current_version
  gen_token=$(generate_token)
@@ -1829,8 +1724,6 @@ manage_installation(){
  echo "4) 仅卸载 OpenClaw 程序（保留 ~/.openclaw 数据）"
  echo "5) 彻底卸载 OpenClaw（删除 ~/.openclaw 全部数据）"
  echo "6) 安装指定版本（可升级/降级）"
- echo "7) 完全开放模式（双层一起改，高风险）"
- echo "8) 恢复默认安全模式（双层恢复）"
  echo "0) 取消并返回主菜单"
  echo "------------------------------------------------"
  read -r -p "请选择操作: " mi_choice
@@ -1909,26 +1802,6 @@ manage_installation(){
    install_specific_openclaw_version
    pause
    ;;
-  7)
-   echo "⚠️ 该操作会将 tool policy + exec approvals 一起切换到完全开放模式"
-   read -r -p "确认继续？(y/N): " confirm
-   if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    enable_exec_approvals_full_open
-   else
-    echo "已取消。"
-   fi
-   pause
-   ;;
-  8)
-   echo "将同时恢复 tool policy 和 exec approvals 的默认安全模式。"
-   read -r -p "确认继续？(y/N): " confirm
-   if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    restore_exec_approvals_default
-   else
-    echo "已取消。"
-   fi
-   pause
-   ;;
   *) return ;;
  esac
 }
@@ -2004,7 +1877,7 @@ menu(){
  printf "%-3s %s\n" "8."  "🔑 一键批准终端设备"
  printf "%-3s %s\n" "9."  "♻️ 管理 Gateway"
  printf "%-3s %s\n" "10." "🔎 查询 Gateway Token"
- printf "%-3s %s\n" "11." "⚠️ 升级/重置/卸载/权限管理"
+ printf "%-3s %s\n" "11." "⚠️ 升级/重置/卸载管理"
  printf "%-3s %s\n" "00." "🔄 更新一键脚本"
  echo "------------------------------------------------"
  printf "%-3s %s\n" "0."  "退出"
