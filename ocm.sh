@@ -702,11 +702,7 @@ set_openclaw_full_open_profile(){
   .tools = (.tools // {}) |
   .tools.exec = (.tools.exec // {}) |
   .tools.exec.security = "full" |
-  .tools.exec.ask = "off" |
-  .tools.exec.elevated = true |
-  .agents = (.agents // {}) |
-  .agents.defaults = (.agents.defaults // {}) |
-  .agents.defaults.toolPolicyProfile = "full"
+  .tools.exec.ask = "off"
  ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
  chmod 600 "$cfg" 2>/dev/null || true
 }
@@ -719,11 +715,7 @@ set_openclaw_default_profile(){
   .tools = (.tools // {}) |
   .tools.exec = (.tools.exec // {}) |
   .tools.exec.security = "allowlist" |
-  .tools.exec.ask = "on-miss" |
-  .tools.exec.elevated = false |
-  .agents = (.agents // {}) |
-  .agents.defaults = (.agents.defaults // {}) |
-  .agents.defaults.toolPolicyProfile = "default"
+  .tools.exec.ask = "on-miss"
  ' "$cfg" > "$cfg.tmp" && mv "$cfg.tmp" "$cfg"
  chmod 600 "$cfg" 2>/dev/null || true
 }
