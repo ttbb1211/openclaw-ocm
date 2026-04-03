@@ -1112,10 +1112,10 @@ save_model_logic(){
 
 resolve_install_version_choice(){
  local target_version resolved_version picked_version choice rc
- echo "1) 安装最新版本"
- echo "2) 从最近正式版列表选择"
- echo "3) 手动输入版本号"
- read -r -p "请选择安装方式 [默认1]: " choice
+ echo "1) 安装最新版本" >&2
+ echo "2) 从最近正式版列表选择" >&2
+ echo "3) 手动输入版本号" >&2
+ read -r -p "请选择安装方式 [默认1]: " choice >&2
 
  case "${choice:-1}" in
   1)
@@ -1128,21 +1128,21 @@ resolve_install_version_choice(){
    rc=${rc:-0}
    case "$rc" in
     0) target_version="$picked_version" ;;
-    2) echo "已取消。"; return 2 ;;
-    3) read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
-    *) echo "❌ 获取版本列表失败，请改用手动输入。"; read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
+    2) echo "已取消。" >&2; return 2 ;;
+    3) read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version >&2 ;;
+    *) echo "❌ 获取版本列表失败，请改用手动输入。" >&2; read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version >&2 ;;
    esac
    ;;
   3)
-   read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version
+   read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version >&2
    ;;
   *)
-   echo "已取消。"
+   echo "已取消。" >&2
    return 2
    ;;
  esac
 
- [[ -z "${target_version:-}" ]] && { echo "已取消。"; return 2; }
+ [[ -z "${target_version:-}" ]] && { echo "已取消。" >&2; return 2; }
 
  echo "🔍 正在检查版本是否存在..." >&2
  resolved_version=$(npm view "openclaw@${target_version}" version 2>/dev/null | tail -n1 | tr -d '[:space:]' || true)
