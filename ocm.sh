@@ -421,12 +421,13 @@ cleanup_openclaw_global_residue(){
 }
 
 install_openclaw_package(){
+ local package_ref="${1:-openclaw@latest}"
  local log_file install_ok=false
  log_file=$(mktemp)
 
- if npm install -g openclaw@latest >"$log_file" 2>&1; then
+ if npm install -g "$package_ref" >"$log_file" 2>&1; then
   install_ok=true
- elif need_cmd sudo && sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+ elif need_cmd sudo && sudo npm install -g "$package_ref" >"$log_file" 2>&1; then
   install_ok=true
  else
   if grep -q 'ENOTEMPTY' "$log_file" 2>/dev/null; then
@@ -434,9 +435,9 @@ install_openclaw_package(){
    npm uninstall -g openclaw >/dev/null 2>&1 || sudo npm uninstall -g openclaw >/dev/null 2>&1 || true
    cleanup_openclaw_global_residue
    npm cache verify >/dev/null 2>&1 || true
-   if npm install -g openclaw@latest >"$log_file" 2>&1; then
+   if npm install -g "$package_ref" >"$log_file" 2>&1; then
     install_ok=true
-   elif need_cmd sudo && sudo npm install -g openclaw@latest >"$log_file" 2>&1; then
+   elif need_cmd sudo && sudo npm install -g "$package_ref" >"$log_file" 2>&1; then
     install_ok=true
    fi
   fi
@@ -829,7 +830,9 @@ post_install_setup(){
 }
 
 install_openclaw(){
- echo -e "\n🚀 开始安装 OpenClaw..."
+ local package_ref rc
+ echo -e "
+🚀 开始安装 OpenClaw..."
  check_dep
  ensure_dirs
 
@@ -848,9 +851,18 @@ install_openclaw(){
  if cmd_exists openclaw; then
   echo "✅ 检测到 OpenClaw 已安装。"
  else
+  package_ref=$(resolve_install_version_choice) || rc=$?
+  rc=${rc:-0}
+  if [[ "$rc" -eq 2 ]]; then
+   return 0
+  elif [[ "$rc" -ne 0 ]]; then
+   pause
+   return 1
+  fi
+
   prepare_node_env || return 1
-  echo "⚙️ 正在安装 OpenClaw..."
-  install_openclaw_package || {
+  echo "⚙️ 正在安装 OpenClaw (${package_ref#openclaw@})..."
+  install_openclaw_package "$package_ref" || {
    echo "❌ 安装失败"
    pause
    return 1
@@ -1095,6 +1107,54 @@ save_model_logic(){
 
  echo "✅ 大模型配置已保存。"
  echo "ℹ️ 当前 provider 已标记为待生效；测试该模型或切换主模型时会自动重启。"
+}
+
+
+resolve_install_version_choice(){
+ local target_version resolved_version picked_version choice rc
+ echo "1) 安装最新版本"
+ echo "2) 从最近正式版列表选择"
+ echo "3) 手动输入版本号"
+ read -r -p "请选择安装方式 [默认1]: " choice
+
+ case "${choice:-1}" in
+  1)
+   printf '%s
+' 'openclaw@latest'
+   return 0
+   ;;
+  2)
+   picked_version=$(select_openclaw_version_from_list) || rc=$?
+   rc=${rc:-0}
+   case "$rc" in
+    0) target_version="$picked_version" ;;
+    2) echo "已取消。"; return 2 ;;
+    3) read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
+    *) echo "❌ 获取版本列表失败，请改用手动输入。"; read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version ;;
+   esac
+   ;;
+  3)
+   read -r -p "请输入要安装的 OpenClaw 版本号 (如 2026.3.28，回车取消): " target_version
+   ;;
+  *)
+   echo "已取消。"
+   return 2
+   ;;
+ esac
+
+ [[ -z "${target_version:-}" ]] && { echo "已取消。"; return 2; }
+
+ echo "🔍 正在检查版本是否存在..." >&2
+ resolved_version=$(npm view "openclaw@${target_version}" version 2>/dev/null | tail -n1 | tr -d '[:space:]' || true)
+ if [[ -z "$resolved_version" ]]; then
+  echo "❌ 未找到版本: $target_version" >&2
+  echo "可先手动查看：npm view openclaw versions --json" >&2
+  return 1
+ fi
+
+ printf '%s
+' "openclaw@${resolved_version}"
+ return 0
 }
 
 add_preset_model(){
