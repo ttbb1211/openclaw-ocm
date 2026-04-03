@@ -688,6 +688,46 @@ get_local_file_sha(){
  sha256sum "$file" 2>/dev/null | awk '{print $1}'
 }
 
+enable_exec_approvals_full_open(){
+ local approvals_file approvals_dir backup_file
+ approvals_dir="$HOME/.openclaw"
+ approvals_file="$approvals_dir/exec-approvals.json"
+ mkdir -p "$approvals_dir"
+
+ if [[ -f "$approvals_file" ]]; then
+  backup_file="$approvals_file.bak.$(date +%Y%m%d-%H%M%S)"
+  cp "$approvals_file" "$backup_file"
+  echo "已备份原审批配置: $backup_file"
+ fi
+
+ cat > "$approvals_file" <<'EOF'
+{
+  "version": 1,
+  "defaults": {
+    "security": "full",
+    "ask": "off",
+    "askFallback": "full",
+    "autoAllowSkills": true
+  },
+  "agents": {
+    "main": {
+      "security": "full",
+      "ask": "off",
+      "askFallback": "full",
+      "autoAllowSkills": true,
+      "allowlist": []
+    }
+  }
+}
+EOF
+
+ chmod 600 "$approvals_file" 2>/dev/null || true
+ echo "✅ 已启用全局一键解除审批（高风险模式）"
+ echo "配置文件: $approvals_file"
+ echo "说明: 默认与 main agent 均已设置为 security=full, ask=off"
+ echo "⚠️ 注意：此模式会显著降低执行审批保护，仅适合你完全自控的服务器"
+}
+
 write_default_config(){
  local gen_token curr_date current_version
  gen_token=$(generate_token)
@@ -1724,6 +1764,7 @@ manage_installation(){
  echo "4) 仅卸载 OpenClaw 程序（保留 ~/.openclaw 数据）"
  echo "5) 彻底卸载 OpenClaw（删除 ~/.openclaw 全部数据）"
  echo "6) 安装指定版本（可升级/降级）"
+ echo "7) 全局一键解除审批（高风险）"
  echo "0) 取消并返回主菜单"
  echo "------------------------------------------------"
  read -r -p "请选择操作: " mi_choice
@@ -1800,6 +1841,16 @@ manage_installation(){
    ;;
   6)
    install_specific_openclaw_version
+   pause
+   ;;
+  7)
+   echo "⚠️ 该操作会将 exec 审批切换为全局放开模式（security=full, ask=off）"
+   read -r -p "确认继续？(y/N): " confirm
+   if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    enable_exec_approvals_full_open
+   else
+    echo "已取消。"
+   fi
    pause
    ;;
   *) return ;;
