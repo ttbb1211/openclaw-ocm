@@ -1695,6 +1695,25 @@ EOF
  pause
 }
 
+disable_new_exec_approvals(){
+ echo -e "\n--- 一键关闭新版审批 ---"
+ echo "此操作将为新版 OpenClaw 写入 ~/.openclaw/exec-approvals.json"
+ echo "默认设置为：ask=off / security=full，并会自动备份旧配置。"
+ read -r -p "确认继续？(y/N): " yn
+ case "$yn" in
+  y|Y)
+   bash /root/.openclaw/workspace/scripts/openclaw_disable_exec_approval.sh || return 1
+   restart_openclaw || true
+   echo "✅ 已关闭新版审批，并已尝试重启 OpenClaw。"
+   pause
+   ;;
+  *)
+   echo "已取消。"
+   pause
+   ;;
+ esac
+}
+
 show_gateway_token(){
  local token port
  token=$(gateway_token)
@@ -1938,6 +1957,7 @@ menu(){
  printf "%-3s %s\n" "9."  "♻️ 管理 Gateway"
  printf "%-3s %s\n" "10." "🔎 查询 Gateway Token"
  printf "%-3s %s\n" "11." "⚠️ 升级/重置/卸载管理"
+printf "%-3s %s\n" "12." "🚫 一键关闭新版审批"
  printf "%-3s %s\n" "00." "🔄 更新一键脚本"
  echo "------------------------------------------------"
  printf "%-3s %s\n" "0."  "退出"
@@ -1955,6 +1975,7 @@ menu(){
   9) check_config && gateway_manage ;;
   10) check_config && show_gateway_token ;;
   11) manage_installation ;;
+  12) disable_new_exec_approvals ;;
   00) self_update_ocm ;;
   0) exit 0 ;;
  esac
