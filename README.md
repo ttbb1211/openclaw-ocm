@@ -17,6 +17,7 @@ A menu-driven one-click manager script for OpenClaw (install / configure / start
 
 ## 近期改进（排坑记录）/ Recent fixes that prevent common pitfalls
 
+- **主菜单新增“一键关闭新版审批”**：在主菜单 `11` 下新增 `12. 🚫 一键关闭新版审批`，可一键写入新版 OpenClaw 的 `~/.openclaw/exec-approvals.json`，自动备份旧配置，并尝试重启 Gateway，避免用户再手动输入关闭审批命令。
 - **修复 Telegram Channel 编辑逻辑**：避免写入非法配置键 `channels.telegram.type`，并支持直接更新 `botToken`（保留 allowlist / dmPolicy）。
 - **避免 Gateway 夜间“消失”**：在安装 Gateway 系统服务后自动执行 `loginctl enable-linger root`，防止 root 的 user service 因无登录会话而停止，导致 Telegram 无回复。
 - **时间同步**：排障时确认/推荐启用 NTP（如 `chrony`），避免时间漂移导致 TLS/网络类问题更难查。
@@ -115,6 +116,7 @@ wget -O ocm.sh https://raw.githubusercontent.com/ttbb1211/openclaw-ocm/main/ocm.
 
 ## 功能简介 / What it does
 
+• 一键关闭新版 OpenClaw exec 审批（自动写入 `~/.openclaw/exec-approvals.json`，并备份旧配置）  
 • 安装 OpenClaw（通过 npm -g openclaw@latest）  
 • 创建/更新配置：~/.openclaw/openclaw.json  
 • 启动/停止/重启 OpenClaw Gateway（优先走 systemd user service）  
