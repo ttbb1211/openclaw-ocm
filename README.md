@@ -4,7 +4,7 @@
 
 A menu-driven one-click manager script for OpenClaw (install / configure / start/stop / logs / channels / models), designed to be quick and practical.
 
-![OCM Menu Screenshot](assets/menu-900-sharp.jpg)
+![OCM Menu Screenshot](assets/menu-main.jpg)
 
 ---
 
